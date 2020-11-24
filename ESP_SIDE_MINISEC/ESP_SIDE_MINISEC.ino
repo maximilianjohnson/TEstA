@@ -16,7 +16,7 @@ unsigned long millistime;
 
 //OUTSTANDING ISSUES:
 //SEE PROBLEMS 1,2,3 FOUND AS HEADERS BELOW
-// - P1: uint32_t read from serial/serialBT
+// - P1: uint32_t read from serial/serialBT - FIXED by Josh on Nov. 23
 // - P2/3: use serial ports as input to function? or figure out a more abstracted approach
 //IMPLEMENT ECDH INTO THE TEstA protocol
 //PACKAGE UP THE WHOLE THING AS AN EASY TO USE HEADER FILE 
@@ -141,9 +141,12 @@ uint32_t miniSecDH(){ //Problem 2
   
   while(SerialBT.available() == 0){
   } //wait until the there are bits in the serial
-  uint32_t B = SerialBT.read(); // Problem 1
-
-  B = 231242144;
+  String BinStr = SerialBT.readString(); // Problem 1 - FIXED
+  Serial.println(BinStr);
+  char Barray [11];
+  BinStr.toCharArray (Barray, 11);
+  uint32_t B = strtoul (Barray, NULL, 0);
+  
   SerialBT.flush();
   
   Serial.print("Received shared index B is: ");
@@ -216,7 +219,7 @@ void setup() {
 
   //Test MiniSecMessage
   String keyString = String(k);
-  encd_message = SerialBT.read();  
+  String encd_message = SerialBT.readString();  
   miniSecMessage(encd_message, keyString);
 
   //End Timer Again for encryption
