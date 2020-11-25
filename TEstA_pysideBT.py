@@ -6,7 +6,7 @@ serialPort arg1 determined by your system,
 maybe worth automating for final report
 '''
 
-serialPort = serial.Serial('COM4',9600,timeout = None)
+serialPort = serial.Serial('/dev/tty.ESP32test-ESP32SPP',9600,timeout = None)
 
 #D1P and D1G are public
 d1prime = 2147483647
@@ -15,6 +15,7 @@ d1generator = 16807
 #Standard DH
 b = randint(1000, 9999)
 B = (d1generator**b)%(d1prime)
+print("Random index B is: ", B)
 
 #Could write a start message, whatever our TEstA needs
 serialPort.write(bytes(str("start"), "utf-8"))
