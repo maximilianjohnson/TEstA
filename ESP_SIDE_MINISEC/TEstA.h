@@ -13,10 +13,10 @@ class TEstA{
     TEstA(int modeFound, BluetoothSerial &sBT);
     
     //TEstA Key Exchange
-    uint32_t TEstA_Key();
+    void TEstA_Key(HardwareSerial &sRef);
   
     //TEstA Send (XXTEA)
-    void TEstA_Send(String plaintext);
+    void TEstA_Send(String plaintext, HardwareSerial &sRef);
   
     //TEstA Read (XXTEA)
     String TEstA_Read();    
@@ -36,7 +36,7 @@ class TEstA{
     uint32_t keyGen();
     
     //FINAL KEY VARIABLE
-    uint32_t xxtea_key;
+    String xxtea_key;
   
     //Mode
     int _mode;
@@ -46,7 +46,7 @@ class TEstA{
   
     //generator
     const uint32_t generator = 16807;
-
+    
     //Bluetooth Serial
     BluetoothSerial sBT;
 };

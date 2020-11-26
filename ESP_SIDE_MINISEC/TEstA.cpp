@@ -5,7 +5,7 @@
 #include "TEstA.h"
 
 //FINAL KEY VARIABLE
-extern uint32_t xxtea_key;
+extern String xxtea_key;
   
 //Mode
 extern int _mode;
@@ -116,70 +116,72 @@ uint32_t TEstA::pow_mod(uint32_t b, uint32_t e, uint32_t m)
 //MY FIRST ATTEMPT AT PUTTING IT ALL TOGETHER
 //BASIC DH
 //B IS GENERATED ON THE OTHER SIDE 
-uint32_t TEstA::TEstA_Key() {
-
-    for (int i = 0; i < 4; i++){
-       //This is our secret key
-    uint32_t a = keyGen();
-
-    //This is our shared index 'A'
-    uint32_t A = pow_mod(generator, a, prime);
-
-    sBT.write(A);
-    sBT.flush();
-
-    while (sBT.available() == 0) {
-    } //wait until the there are bits in the serial
-    String BinStr = sBT.readString(); // Problem 1 - FIXED
-    
-    char Barray[11];
-    BinStr.toCharArray(Barray, 11);
-    uint32_t B = strtoul(Barray, NULL, 0);
-
-    sBT.flush();
-
-    //This is our shared secret encryption key.
-    xxtea_key = pow_mod(B, a, prime);
+void TEstA::TEstA_Key(HardwareSerial &sRef) {
+    while(sBT.available() == 0){
     }
-    
-
-    //reseed the random number generator with the shared secret key k
-    return(xxtea_key);
+    sBT.flush();
+    uint32_t k[2];
+    for (int i = 0; i < 2; i++){
+      //This is our secret key
+      uint32_t a = keyGen();
+  
+      //This is our shared index 'A'
+      uint32_t A = pow_mod(generator, a, prime);
+      String sA = String(A);
+      String toSend = sA + '\n';
+      sBT.print(toSend);
+      sBT.flush();
+  
+      while (sBT.available() == 0) {
+      } //wait until the there are bits in the serial
+      String BinStr = sBT.readString(); // Problem 1 - FIXED
+      
+      char Barray[11];
+      BinStr.toCharArray(Barray, 11);
+      uint32_t B = strtoul(Barray, NULL, 0);
+  
+      sBT.flush();
+  
+      //This is our shared secret encryption key.
+      k[i] = pow_mod(B, a, prime);
+      sRef.println(k[i]);
+    }
+    String kS1 = String(k[0]);
+    String kS2 = String(k[1]);
+    String fresh_key_pre = kS1 + kS2;
+    String fresh_key = fresh_key_pre.substring(0, 16);
+    sRef.println(fresh_key);
+    xxtea_key = fresh_key;
 }
 
 
 //MINISEC/ TEstA encryption 100% based on xxtea
+
 //Sending Function
-void TEstA::TEstA_Send(String plaintext) {
-
-    String msg = (plaintext);
-    String keyString = String(xxtea_key);
-    xxtea.setKey(keyString);
-
+void TEstA::TEstA_Send(String plaintext, HardwareSerial &sRef) {
     // Perform Encryption on the Data
-//    sRef.print(("Created Encrypted Data: "));
+    sRef.println("xxtea_key");
+    sRef.println(xxtea_key);
+    xxtea.setKey(xxtea_key);
+    sRef.println("diasdsdancd");
     String result = xxtea.encrypt(plaintext);
-    result.toLowerCase(); // (Optional)
-//    sRef.println(result);
-
+    sRef.println("didasdaddancd");
+    String toSend = result + '\n';
+    sRef.println(toSend);
     // Send to BT
-    sBT.print(result);
+    sBT.print(toSend);
+    sRef.println("dideasdasadsasdasdasdasdncd");
 }
 
 //Reading Function
-String TEstA::TEstA_Read() {
-    String keyString = String(xxtea_key);
-    xxtea.setKey(keyString);
+String TEstA::TEstA_Read() {   
     // Receive message
+    xxtea.setKey(xxtea_key);
     while (sBT.available() == 0) {
-    } //wait until the there are bits in the serial
+    } //wait until the there are bits in the serial   
     String encd = sBT.readString(); // Problem 1 - FIXED
-//    sRef.print(("Received Encrypted Data: "));
-//    sRef.println(encd);
 
     // Perform Decryption
     String result = xxtea.decrypt(encd);
-//    sRef.print((" Decrypted Data: "));
-//    sRef.println(result);
     return result;
 }

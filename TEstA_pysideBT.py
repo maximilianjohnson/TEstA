@@ -1,34 +1,77 @@
 import serial
 from random import randint
+#currently from pip install xxtea-py, other is just xxtea
+import xxtea
 
 '''
 serialPort arg1 determined by your system,
 maybe worth automating for final report
 '''
 
-serialPort = serial.Serial('/dev/tty.ESP32test-ESP32SPP',9600,timeout = None)
-
-#D1P and D1G are public
+serialPort = serial.Serial('COM4',9600,timeout = None)
 d1prime = 2147483647
 d1generator = 16807
+#D1P and D1G are public
 
-#Standard DH
-b = randint(1000, 9999)
-B = (d1generator**b)%(d1prime)
-print("Random index B is: ", B)
+class TEstA:
 
-#Could write a start message, whatever our TEstA needs
-serialPort.write(bytes(str("start"), "utf-8"))
+    def __init__(self, d1prime, d1generator, serialPort):
+        self.d1prime = d1prime
+        self.d1generator = d1generator
+        self.serialPort = serialPort
+        self.secret_key = ''
 
-#Needs to reaad A
-#needs to know length of A incoming in bytes I believe
-A = serialPort.read()
+    def TEstA_Key(self):
+        print('here')
+        self.serialPort.write(bytes(str("start"), "utf-8"))
+        for i in range(2):
+            A = serialPort.readline()
+            print("New A")
+            print(A)
+            print(int(A))
+            A = int(A)
+            b = randint(1000, 9999)
+            B = (self.d1generator**b)%(self.d1prime)
+            print("Random index B is: ", B)
+            serialPort.write(bytes(str(B), "utf-8")) #not being read on the arduino/esp32 side
+            key_inter = (A**b)%(self.d1prime)
+            self.secret_key = self.secret_key + str(key_inter)
+            print(self.secret_key)
+        self.secret_key = self.secret_key[0:16]
 
-#this should be sending b
-#B needs to be read as an uint32_t on the other side
-#Part of found "Problem 1"
-#Not sure how pyserial write works, how it needs to be encoded ect
-serialPort.write(bytes(str(B), "utf-8")) #not being read on the arduino/esp32 side
+    def TEstA_Send(self, text):
+        encrypted = xxtea.encrypt(text, self.secret_key)
+        self.serialPort.write(bytes(str(encrypted), "utf-8"))
+
+    def TEstA_Read(self):
+        #This section is to test what the encryption should look like ideally
+        text = "Hello!"
+        encrypt_data = xxtea.encrypt(text, self.secret_key)
+        print(encrypt_data)
+        decrypt_data = xxtea.decrypt_utf8(encrypt_data, self.secret_key)
+        print(decrypt_data)
+
+        #reading
+        text = serialPort.readline()
+        print(text)
+        #decoding
+        text = text.decode("utf-8")
+        print(text)
+        #trim end line character
+        text = text[:-1]
+
+        #turn to bytes
+        text = bytes.fromhex(text)
+        print(text)
+
+        plaintext = xxtea.decrypt_utf8(text, self.secret_key)
+        print(plaintext)
+        return plaintext
+
+t1 = TEstA(d1prime, d1generator, serialPort)
+t1.TEstA_Key()
+decr = t1.TEstA_Read()
+print(decr)
 
 #This just sends stuff on the serial, nothing important
 while True:
