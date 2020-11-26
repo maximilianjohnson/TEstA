@@ -7,16 +7,26 @@
 #endif
 
 BluetoothSerial SerialBT;
-TEstA tke = TEstA(1, SerialBT);
+
 
 void setup() {
   Serial.begin(9600);
   SerialBT.begin("ESP32test"); //Bluetooth device name
-
-  tke.TEstA_Key();
+  TEstA tke = TEstA(1, SerialBT);  
+  //MiniSec / TEstA key exchange 
+  tke.TEstA_Key(Serial);
+  tke.TEstA_Send("Hello!", Serial);
+  Serial.println("SENT");
 }
 
+
+//Nothing rn
 void loop() {
-  tke.TEstA_send("hey");
-  tke.TEstA_read();
+  if (Serial.available()) {
+    SerialBT.write(Serial.read());
+  }
+  if (SerialBT.available()) {
+    Serial.write(SerialBT.read());
+  }
+  delay(20);
 }
