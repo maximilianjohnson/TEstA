@@ -19,7 +19,7 @@ class TEstA{
     void TEstA_Send(String plaintext, HardwareSerial &sRef);
   
     //TEstA Read (XXTEA)
-    String TEstA_Read();    
+    String TEstA_Read(HardwareSerial &sRef);    
     
   private:
     //POW MOD

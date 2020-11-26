@@ -163,25 +163,24 @@ void TEstA::TEstA_Send(String plaintext, HardwareSerial &sRef) {
     sRef.println("xxtea_key");
     sRef.println(xxtea_key);
     xxtea.setKey(xxtea_key);
-    sRef.println("diasdsdancd");
     String result = xxtea.encrypt(plaintext);
-    sRef.println("didasdaddancd");
     String toSend = result + '\n';
     sRef.println(toSend);
     // Send to BT
     sBT.print(toSend);
-    sRef.println("dideasdasadsasdasdasdasdncd");
 }
 
 //Reading Function
-String TEstA::TEstA_Read() {   
+String TEstA::TEstA_Read(HardwareSerial &sRef) {   
     // Receive message
     xxtea.setKey(xxtea_key);
     while (sBT.available() == 0) {
     } //wait until the there are bits in the serial   
     String encd = sBT.readString(); // Problem 1 - FIXED
-
+    sBT.flush();
+    sRef.println(encd);
     // Perform Decryption
     String result = xxtea.decrypt(encd);
+    sRef.println(result);
     return result;
 }
